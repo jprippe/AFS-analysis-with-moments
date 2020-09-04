@@ -30,7 +30,7 @@ topq =grep("topq=",commandArgs())
 if(length(topq)>0) { topq=as.numeric(sub("topq=","", commandArgs()[topq])) } else { topq=0.5 }
 
 path2models =grep("path2models=",commandArgs())
-if(length(path2models)>0) { topq=sub("path2models=","", commandArgs()[path2models]) } else { path2models="~/AFS-analysis-with-moments/multimodel_inference/" }
+if(length(path2models)>0) { path2models=sub("path2models=","", commandArgs()[path2models]) } else { path2models="~/AFS-analysis-with-moments/multimodel_inference/" }
 
 if(length(grep("folded=T",commandArgs()))>0) { folded=TRUE } else { folded=FALSE }
 
@@ -54,7 +54,7 @@ if (folded) {
 }
 wmod=as.character(npl[1,2])
 npl=npl[,-c(1:2)]
-params=c(strsplit(gsub("[ \t]","",pa[grep(wmod,pa)]),split="[:,]")[[1]][-1],"theta")
+params=c(strsplit(gsub("[ \t]","",pa[grep(paste0(wmod,".py"),pa)]),split="[:,]")[[1]][-1],"theta")
 names(npl)=c("id","np","ll","boot","p1","p2",params)
 #head(npl)
 
@@ -127,5 +127,5 @@ for(i in 1:ncol(idpara)){
 }
 bestrun=maxlike$id[which(cors==max(cors))]
 system(paste("cp *_",bestrun,"_*pdf ",infile,"_representativeModel.pdf",sep=""))
-system(paste("cp *_",bestrun,"_*png ",infile,"_representativeModel.png",sep=""))
+system(paste("cp *_",bestrun,"*png ",infile,"_representativeModel.png",sep=""))
 message("representative run: ",bestrun)
