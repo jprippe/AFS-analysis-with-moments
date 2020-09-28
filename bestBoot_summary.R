@@ -7,14 +7,11 @@ if (length(commandArgs(trailingOnly=TRUE))<1) {
 	
 Summarizes bootstrap replicates for the best model.
 
-infile=[filename]    results of bootstraps. Obtained by summarizing the STDOUT output of model fitting
-                     by running 
+bootRes=[filename]    results of bootstraps (likely named as [pop.contrast].winboots)
                      
-grep RESULT myboots.out -A 4 | grep -E \"[0-9]|\\]\" | perl -pe 's/^100.+\\.o\\d+\\S//' | perl -pe 's/\\n//' | perl -pe 's/[\\[\\]]//g' | perl -pe 's/RESULT/\\nRESULT/g' | grep RESULT >myboots.res
-
 folded=FALSE    whether the analysis was using folded SFS
 				
-topq=0.5        top quantile to summarize. For example 0.25 means that only the best-likelihood 25% 
+topq=0.5        top quantile to summarize. For example 0.75 means that only the best-likelihood 75% 
                 of bootstrap replicates will be used to summarize paramter values.
                 
 path2models=\"~/AFS-analysis-with-moments/multimodel_inference/\"   path to the cloned repository
@@ -22,9 +19,11 @@ path2models=\"~/AFS-analysis-with-moments/multimodel_inference/\"   path to the 
 ")
 }
 
-infl=grep("infile=",commandArgs())
+# ----------- reading input parameters
+
+infl=grep("bootRes=",commandArgs())
 if (length(infl)==0) { stop ("specify input file (infile=filename)\nRun script without arguments to see all options\n") }
-infile=sub("infile=","", commandArgs()[infl])
+bootRes=sub("bootRes=","", commandArgs()[infl])
 
 topq =grep("topq=",commandArgs())
 if(length(topq)>0) { topq=as.numeric(sub("topq=","", commandArgs()[topq])) } else { topq=0.5 }
@@ -34,13 +33,18 @@ if(length(path2models)>0) { path2models=sub("path2models=","", commandArgs()[pat
 
 if(length(grep("folded=T",commandArgs()))>0) { folded=TRUE } else { folded=FALSE }
 
+# ----------- reading data
+
 require(ggplot2)
 
-   # setwd("~/Dropbox/Documents/perl_bin/moments_scripts/")
-   # infile="c23.boots.res"
-   # path2models="~/AFS-analysis-with-moments/multimodel_inference/"
-   # topq=0.5
-   # folded=F
+# bootRes="c23.boots"
+# path2models="~/AFS-analysis-with-moments/multimodel_inference/"
+# topq=0.5
+# folded=FALSE
+
+system(paste("grep RESULT ", bootRes," -A 4 | grep -v Launcher | grep -E \"[0-9]|\\]\" | perl -pe 's/^100.+\\.o\\d+\\S//' | perl -pe 's/\\n//' | perl -pe 's/[\\[\\]]//g' | perl -pe 's/RESULT/\\nRESULT/g' | grep RESULT >", bootRes,".res",sep=""))
+
+infile=paste(bootRes,".res",sep="")
 
 npl=read.table(infile)
 pdf(paste(infile,"_plots.pdf",sep=""),height=3, width=8)
@@ -125,7 +129,7 @@ cors=c()
 for(i in 1:ncol(idpara)){
 	cors=c(cors,cor(medians,idpara[,i]))
 }
-bestrun=maxlike$id[which(cors==max(cors))]
+bestrun=maxlike$id[which(cors==max(cors))[1]]
 system(paste("cp *_",bestrun,"_*pdf ",infile,"_representativeModel.pdf",sep=""))
-system(paste("cp *_",bestrun,"*png ",infile,"_representativeModel.png",sep=""))
+system(paste("cp *_",bestrun,".png ",infile,"_representativeModel.png",sep=""))
 message("representative run: ",bestrun)
